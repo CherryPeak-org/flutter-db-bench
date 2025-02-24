@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart';
 
 import 'executor.dart';
 import 'hive_executor.dart' as hive;
-import 'isar_sync_executor.dart' as isar_sync;
 import 'obx_executor.dart' as obx;
 import 'sqf_executor.dart' as sqf;
 
@@ -66,7 +65,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-enum DbEngine { ObjectBox, sqflite, Hive, IsarSync }
+enum DbEngine { ObjectBox, sqflite, Hive }
 
 enum Mode { CRUD, Queries, QueryById }
 
@@ -93,26 +92,32 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       final cols = <Widget>[];
       for (var i = 0; i < columns.length; i++) {
-        cols.add(Text(columns[i],
+        cols.add(
+          Text(
+            columns[i],
             softWrap: false,
             style: TextStyle(
-                fontSize: 20,
-                fontWeight: (_resultRows.isEmpty || columns[i] == 'Count')
-                    ? FontWeight.bold
-                    : FontWeight.normal),
-            textAlign: i == 0 ? TextAlign.left : TextAlign.right));
+              fontSize: 20,
+              fontWeight:
+                  (_resultRows.isEmpty || columns[i] == 'Count')
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+            ),
+            textAlign: i == 0 ? TextAlign.left : TextAlign.right,
+          ),
+        );
       }
       _resultRows.add(TableRow(children: cols));
     });
   }
 
   void configure(DbEngine db, Mode mode, bool indexed) => setState(() {
-        _db = db;
-        _mode = mode;
-        _indexed = indexed;
-        _result = '';
-        _resultRows.clear();
-      });
+    _db = db;
+    _mode = mode;
+    _indexed = indexed;
+    _result = '';
+    _resultRows.clear();
+  });
 
   @override
   void initState() {
@@ -145,12 +150,6 @@ class _MyHomePageState extends State<MyHomePage> {
       case DbEngine.Hive:
         // No explicit index support for Hive.
         return hive.Executor.create(dbDir, _tracker);
-      case DbEngine.IsarSync:
-        if (useIndexes) {
-          return isar_sync.ExecutorIndexed.create(dbDir, _tracker);
-        } else {
-          return isar_sync.ExecutorPlain.create(dbDir, _tracker);
-        }
       default:
         throw Exception('Unknown executor');
     }
@@ -159,9 +158,9 @@ class _MyHomePageState extends State<MyHomePage> {
   bool get indexed => _indexed && _db != DbEngine.Hive;
 
   void _stopBenchmark() async => setState(() {
-        _result = 'Benchmark stopping...';
-        _state = RunState.stopping;
-      });
+    _result = 'Benchmark stopping...';
+    _state = RunState.stopping;
+  });
 
   void _runBenchmark() async {
     setState(() {
@@ -199,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> {
           await Future.delayed(const Duration(milliseconds: 10));
         }
         return Future.value();
-      })
+      }),
     ]);
     return Future.value(_state == RunState.running);
   }
@@ -236,12 +235,10 @@ class _MyHomePageState extends State<MyHomePage> {
           }
 
           if (_state == RunState.running) {
-            _tracker.printTimes(avgOnly: true, functions: [
-              'insertMany',
-              'readAll',
-              'updateMany',
-              'removeMany',
-            ]);
+            _tracker.printTimes(
+              avgOnly: true,
+              functions: ['insertMany', 'readAll', 'updateMany', 'removeMany'],
+            );
           }
           break;
 
@@ -258,34 +255,39 @@ class _MyHomePageState extends State<MyHomePage> {
           // About 9 sources have the same target
           // Ensure target count is uneven to not align with odd/even int values.
           final targetCount = objectsCount ~/ 10;
-          final relTargetsCount =
-              max(1, targetCount.isEven ? targetCount - 1 : targetCount);
+          final relTargetsCount = max(1, targetCount.isEven ? targetCount - 1 : targetCount);
           await relBench.insertData(objectsCount, relTargetsCount);
-          final distinctSourceStrings =
-              ExecutorBaseRel.distinctSourceStrings(objectsCount);
-          debugPrint(
-              "source groups = $distinctSourceStrings, targets = $relTargetsCount");
+          final distinctSourceStrings = ExecutorBaseRel.distinctSourceStrings(objectsCount);
+          debugPrint("source groups = $distinctSourceStrings, targets = $relTargetsCount");
 
           final resultCounts = List<int>.filled(3, -1);
 
           for (var i = 0; i < runs && _state == RunState.running; i++) {
-            final qStringValues = List.generate(operationsCount,
-                (_) => inserts[random.nextInt(objectsCount)].tString,
-                growable: false);
-            final qStringMatching =
-                await bench.queryStringEquals(qStringValues);
+            final qStringValues = List.generate(
+              operationsCount,
+              (_) => inserts[random.nextInt(objectsCount)].tString,
+              growable: false,
+            );
+            final qStringMatching = await bench.queryStringEquals(qStringValues);
             assert(qStringMatching.length == 1);
 
             final qLinkConfigs = List.generate(operationsCount, (_) {
               // Ensures 5-6 results (depending on how many int condition filters).
               // Also see prepareDataSources function in executor.
               final number = random.nextInt(distinctSourceStrings);
-              return ConfigQueryWithLinks('Source group #$number',
-                  random.nextInt(2), 'Target #$number');
+              return ConfigQueryWithLinks(
+                'Source group #$number',
+                random.nextInt(2),
+                'Target #$number',
+              );
             }, growable: false);
             final relResults = await relBench.queryWithLinks(qLinkConfigs);
             RangeError.checkValueInInterval(
-                relResults.length, 5, 6, 'queryWithLinks results length');
+              relResults.length,
+              5,
+              6,
+              'queryWithLinks results length',
+            );
 
             await printResult('$_mode: ${i + 1}/$runs finished');
 
@@ -294,10 +296,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
 
           if (_state == RunState.running) {
-            _tracker.printTimes(avgOnly: true, functions: [
-              'queryStringEquals',
-              'queryWithLinks',
-            ]);
+            _tracker.printTimes(avgOnly: true, functions: ['queryStringEquals', 'queryWithLinks']);
 
             _print(<String>['', '']);
             _print(<String>['', 'Count']);
@@ -324,9 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
           final ids = inserts.map((e) => e.id).toList(growable: false);
 
           randomSlice(List<int> list, int length) {
-            final start = list.length == length
-                ? 0
-                : random.nextInt(list.length - length);
+            final start = list.length == length ? 0 : random.nextInt(list.length - length);
             final result = list.sublist(start, start + length);
             assert(result.length == length);
             return result;
@@ -337,9 +334,10 @@ class _MyHomePageState extends State<MyHomePage> {
             final idsShuffled = (ids.toList(growable: false))..shuffle(random);
             final randomSliceLength = min(ids.length, resultsCount);
             final qByIdItems = await bench.queryById(
-                randomSlice(idsShuffled, randomSliceLength), '(random)');
-            final qByIdItems2 =
-                await bench.queryById(randomSlice(ids, randomSliceLength));
+              randomSlice(idsShuffled, randomSliceLength),
+              '(random)',
+            );
+            final qByIdItems2 = await bench.queryById(randomSlice(ids, randomSliceLength));
             assert(qByIdItems.length == qByIdItems2.length);
 
             await printResult('$_mode: ${i + 1}/$runs finished');
@@ -348,10 +346,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
 
           if (_state == RunState.running) {
-            _tracker.printTimes(avgOnly: true, functions: [
-              'queryById',
-              'queryById(random)',
-            ]);
+            _tracker.printTimes(avgOnly: true, functions: ['queryById', 'queryById(random)']);
 
             _print(<String>['', '']);
             _print(<String>['', 'Count']);
@@ -390,10 +385,9 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       const count = 100;
       await bench.test(
-          count: count,
-          qString: _mode == Mode.Queries
-              ? bench.prepareData((count / 2).floor()).last.tString
-              : null);
+        count: count,
+        qString: _mode == Mode.Queries ? bench.prepareData((count / 2).floor()).last.tString : null,
+      );
     } catch (e) {
       setState(() {
         _result = "Executor test failed: $e";
@@ -422,15 +416,16 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(children: [
-              const Spacer(),
-              DropdownButton(
+            Row(
+              children: [
+                const Spacer(),
+                DropdownButton(
                   value: _db,
                   items: enumDropDownItems(DbEngine.values),
-                  onChanged: (DbEngine? value) =>
-                      configure(value!, _mode, _indexed)),
-              const Spacer(),
-              DropdownButton(
+                  onChanged: (DbEngine? value) => configure(value!, _mode, _indexed),
+                ),
+                const Spacer(),
+                DropdownButton(
                   value: _mode,
                   // TODO items: enumDropDownItems(Mode.values),
                   //      Isar queries can't be evaluated yet because the model
@@ -440,100 +435,100 @@ class _MyHomePageState extends State<MyHomePage> {
                   //      it's the only function executed and wouldn't be
                   //      comparable to other databases that execute other
                   //      benchmarks in the same loop.
-                  items: enumDropDownItems(Mode.values
-                      .where((mode) =>
-                          _db != DbEngine.IsarSync ||
-                          (mode != Mode.Queries && mode != Mode.QueryById))
-                      .toList()),
-                  onChanged: (Mode? value) => configure(_db, value!, _indexed)),
-              const Spacer(),
-              const Text('Index'),
-              if (_db == DbEngine.Hive)
-                const Text(' not available')
-              else
-                Switch(
-                  value: _indexed,
-                  onChanged: (bool value) => configure(_db, _mode, value),
-                  activeTrackColor: Colors.yellow,
-                  activeColor: Colors.orangeAccent,
+                  items: enumDropDownItems(Mode.values),
+                  onChanged: (Mode? value) => configure(_db, value!, _indexed),
                 ),
-              const Spacer(),
-            ]),
-            Row(children: [
-              const Spacer(),
-              Expanded(
-                  child: TextField(
-                keyboardType: TextInputType.number,
-                controller: _runsController,
-                decoration: const InputDecoration(
-                  labelText: 'Runs',
-                ),
-              )),
-              if (_mode == Mode.Queries) const Spacer(),
-              if (_mode == Mode.Queries)
-                Expanded(
-                    child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _operationsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Operations',
+                const Spacer(),
+                const Text('Index'),
+                if (_db == DbEngine.Hive)
+                  const Text(' not available')
+                else
+                  Switch(
+                    value: _indexed,
+                    onChanged: (bool value) => configure(_db, _mode, value),
+                    activeTrackColor: Colors.yellow,
+                    activeColor: Colors.orangeAccent,
                   ),
-                )),
-              if (_mode == Mode.QueryById) const Spacer(),
-              if (_mode == Mode.QueryById)
+                const Spacer(),
+              ],
+            ),
+            Row(
+              children: [
+                const Spacer(),
                 Expanded(
-                    child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _resultsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Results',
-                  ),
-                )),
-              const Spacer(),
-              Expanded(
                   child: TextField(
-                keyboardType: TextInputType.number,
-                controller: _objectsController,
-                decoration: const InputDecoration(
-                  labelText: 'Objects',
+                    keyboardType: TextInputType.number,
+                    controller: _runsController,
+                    decoration: const InputDecoration(labelText: 'Runs'),
+                  ),
                 ),
-              )),
-              const Spacer(),
-            ]),
+                if (_mode == Mode.Queries) const Spacer(),
+                if (_mode == Mode.Queries)
+                  Expanded(
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      controller: _operationsController,
+                      decoration: const InputDecoration(labelText: 'Operations'),
+                    ),
+                  ),
+                if (_mode == Mode.QueryById) const Spacer(),
+                if (_mode == Mode.QueryById)
+                  Expanded(
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      controller: _resultsController,
+                      decoration: const InputDecoration(labelText: 'Results'),
+                    ),
+                  ),
+                const Spacer(),
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    controller: _objectsController,
+                    decoration: const InputDecoration(labelText: 'Objects'),
+                  ),
+                ),
+                const Spacer(),
+              ],
+            ),
             const Spacer(),
             Text(_result),
             const Spacer(),
             Container(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Table(
-                    border: const TableBorder(
-                        horizontalInside: BorderSide(color: Color(0x55000000))),
-                    children: _resultRows)),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Table(
+                border: const TableBorder(horizontalInside: BorderSide(color: Color(0x55000000))),
+                children: _resultRows,
+              ),
+            ),
             const Spacer(),
           ],
         ),
       ),
-      floatingActionButton: _state == RunState.stopping
-          ? null
-          : _state == RunState.running
+      floatingActionButton:
+          _state == RunState.stopping
+              ? null
+              : _state == RunState.running
               ? FloatingActionButton(
-                  onPressed: _stopBenchmark,
-                  tooltip: 'Stop',
-                  child: const Icon(Icons.stop),
-                )
+                onPressed: _stopBenchmark,
+                tooltip: 'Stop',
+                child: const Icon(Icons.stop),
+              )
               : FloatingActionButton(
-                  onPressed: _runBenchmark,
-                  tooltip: 'Start',
-                  child: const Icon(Icons.play_arrow),
-                ), // This trailing comma makes auto-formatting nicer for build methods.
+                onPressed: _runBenchmark,
+                tooltip: 'Start',
+                child: const Icon(Icons.play_arrow),
+              ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
 
-List<DropdownMenuItem<T>> enumDropDownItems<T>(List<T> values) => values
-    .map((dynamic e) => DropdownMenuItem<T>(
-          value: e,
-          child:
-              Text(e.toString().substring(e.runtimeType.toString().length + 1)),
-        ))
-    .toList();
+List<DropdownMenuItem<T>> enumDropDownItems<T>(List<T> values) =>
+    values
+        .map(
+          (dynamic e) => DropdownMenuItem<T>(
+            value: e,
+            child: Text(e.toString().substring(e.runtimeType.toString().length + 1)),
+          ),
+        )
+        .toList();

@@ -17,11 +17,11 @@ class TestEntityPlainAdapter extends TypeAdapter<TestEntityPlain> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return TestEntityPlain(
-      fields[0] as int,
+      (fields[0] as num).toInt(),
       fields[1] as String,
-      fields[2] as int,
-      fields[3] as int,
-      fields[4] as double,
+      (fields[2] as num).toInt(),
+      (fields[3] as num).toInt(),
+      (fields[4] as num).toDouble(),
     );
   }
 
@@ -63,10 +63,10 @@ class RelSourceEntityPlainAdapter extends TypeAdapter<RelSourceEntityPlain> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return RelSourceEntityPlain(
-      fields[0] as int,
+      (fields[0] as num).toInt(),
       fields[1] as String,
-      fields[2] as int,
-      fields[3] as int,
+      (fields[2] as num).toInt(),
+      fields[3] == null ? 0 : (fields[3] as num).toInt(),
     );
   }
 
@@ -106,7 +106,7 @@ class RelTargetEntityAdapter extends TypeAdapter<RelTargetEntity> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return RelTargetEntity(
-      fields[0] as int,
+      (fields[0] as num).toInt(),
       fields[1] as String,
     );
   }

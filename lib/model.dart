@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:objectbox/objectbox.dart' as obx;
 
 part 'model.g.dart';
